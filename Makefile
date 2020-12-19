@@ -1,7 +1,7 @@
 ﻿CFLAGS = -Wall -pedantic -Wextra -Wshadow -Wno-missing-field-initializers -Werror -std=c11 \
 	-Iinclude
 LDFLAGS = -static -shared -lole32
-RELEASE_CFLAGS = -O2
+RELEASE_CFLAGS = -O2 -DNDEBUG
 RELEASE_LDFLAGS = -s
 DEBUG_CFLAGS = -g #-fsanitize=address,pointer-compare,pointer-subtract,leak,undefined
 
@@ -20,7 +20,7 @@ x86_debug: $(TARGETS_X86_DEBUG)
 x86-64_debug: $(TARGETS_X86-64_DEBUG)
 
 clean:
-	rm -rf build_x86 build_x86-64 build_x86_debug build_x86-64_debug
+	rm -rf $(BUILD_DIRS)
 
 $(BUILD_DIRS):
 	mkdir $@

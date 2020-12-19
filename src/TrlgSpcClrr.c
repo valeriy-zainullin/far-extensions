@@ -6,34 +6,18 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <assert.h>
-
-#define DLL_EXPORT __declspec(dllexport)
-#define EXPLICITLY_UNUSED(variable) ((void) variable)
-
-typedef struct FarColor FarColor;
-typedef struct VersionInfo VersionInfo;
-typedef struct EditorGetString EditorGetString;
-typedef struct EditorInfo EditorInfo;
-typedef struct PluginStartupInfo PluginStartupInfo;
-typedef struct GlobalInfo GlobalInfo;
-typedef struct PluginInfo PluginInfo;
-typedef struct OpenInfo OpenInfo;
-typedef struct EditorColor EditorColor;
-typedef struct ProcessEditorEventInfo ProcessEditorEventInfo;
-
+// #include <wchar.h> // fwprintf
 
 static const wchar_t* TITLE = L"TrlgSpcClrr";
 static const wchar_t* DESCRIPTION = L"Colors trailing spacecharacters.";
-static const wchar_t* AUTHOR = L"Valeriy Zainullin";
 
-static const unsigned int PLUGIN_COLORING_PRIORITY = 2;
-static const FarColor PLUGIN_COLOR_USED = {FCF_BG_4BIT, {(COLORREF) 0}, {(COLORREF) 0x0000FF00}};
+static const unsigned int PLUGIN_COLORING_PRIORITY = 1 << 30;
+static const FarColor PLUGIN_COLOR_USED = {FCF_4BITMASK, {0}, {0x8}};
 
 static const VersionInfo MIN_FAR_VERSION = {3, 0, 0, 0, VS_RELEASE};
 static const VersionInfo PLUGIN_VERSION = {1, 0, 0, 1, VS_RELEASE};
 
 
-static bool farAPIWasInitialized = false;
 static PluginStartupInfo farAPI;
 
 static bool pluginGUIDInitialized = false;
@@ -71,12 +55,8 @@ DLL_EXPORT WINAPI void GetPluginInfoW(PluginInfo* info) {
 }
 */
 
-DLL_EXPORT WINAPI void SetStartupInfo(const PluginStartupInfo* info) {
-	if (info->StructSize < sizeof(PluginStartupInfo)) {
-		return;
-	}
+DLL_EXPORT WINAPI void SetStartupInfoW(const PluginStartupInfo* info) {
 	farAPI = *info;
-	farAPIWasInitialized = true;
 }
 
 static bool isSpaceCharacter(const wchar_t character) {
@@ -85,33 +65,53 @@ static bool isSpaceCharacter(const wchar_t character) {
 
 static void colorLine(const unsigned long long lineNumber) {
 	EditorGetString editorString = {sizeof(EditorGetString)};
+	editorString.StringNumber = lineNumber;
 	intptr_t editorControlResult = farAPI.EditorControl(
 		CURRENT_EDITOR,
 		ECTL_GETSTRING,
-		(intptr_t) (MemoryAddress) lineNumber,
+		(intptr_t) 0,
 		&editorString
 	);
 	assert((MemoryAddress) editorControlResult == 1);
 	EXPLICITLY_UNUSED(editorControlResult);
 	
-	const wchar_t* currentLine = editorString.StringText;
-	const wchar_t* currentEOL = editorString.StringEOL;
-	unsigned long long currentLineLength = (MemoryAddress) editorString.StringLength;
-	if (*currentEOL == L'\r') {
-		currentLineLength -= 2;
-	} else if (*currentEOL == L'\n') {
-		currentLineLength -= 1;
+	const wchar_t* line = editorString.StringText;
+	unsigned long long lineLength = (MemoryAddress) editorString.StringLength;
+	/*
+	if (line[lineLength] == '\r') {
+		lineLength -= 1;
+	} else if (lineLength > 0 && line[lineLength] == '\n') {
+		lineLength -= 1;
+		if (lineLength > 0 && line[lineLength] == '\r') {
+			lineLength -= 1;
+		}
 	}
-	unsigned long long endPos = currentLineLength - 1;
-	if (!isSpaceCharacter(currentLine[endPos])) {
+	*/
+	if (lineLength == 0) {
+		DEBUG_PRINTF("Line %llu: ", lineNumber);
+		DEBUG_PRINTF("length is %llu.\n", lineLength);
+		return;
+	}
+	
+	unsigned long long endPos = lineLength - 1;
+	if (!isSpaceCharacter(line[endPos])) {
+		DEBUG_PRINTF("Line %llu: ", lineNumber);
+		DEBUG_PRINTF("length is %llu, no trailing spacecharacters. ", lineLength);
+		// fwprintf(stderr, line);
+		DEBUG_PRINTF("line[endPos] = %d.\n", (int) line[endPos]);
 		return;
 	}
 	unsigned long long beginPos = endPos;
-	for (; beginPos >= 1 && isSpaceCharacter(currentLine[beginPos]); --beginPos);
+	for (; beginPos >= 1 && isSpaceCharacter(line[beginPos - 1]); --beginPos);
+	
+	DEBUG_PRINTF("Line %llu: ", lineNumber);
+	DEBUG_PRINTF("length is %llu, ", lineLength);
+	DEBUG_PRINTF("trailing spacecharacters start at %llu and ", beginPos);
+	DEBUG_PRINTF("end at %llu.\n", endPos);
 	
 	EditorColor editorColor = {
 		sizeof(EditorColor),
-		(intptr_t) lineNumber,
+		(intptr_t) (MemoryAddress) lineNumber,
 		(intptr_t) (MemoryAddress) 0,
 		(intptr_t) beginPos,
 		(intptr_t) endPos,
@@ -126,11 +126,7 @@ static void colorLine(const unsigned long long lineNumber) {
 }
 
 DLL_EXPORT WINAPI intptr_t ProcessEditorEventW(const ProcessEditorEventInfo* info) {
-	if (
-		info->StructSize < sizeof(ProcessEditorEventInfo) ||
-		!farAPIWasInitialized ||
-		(MemoryAddress) info->Event != EE_REDRAW
-	) {
+	if ((MemoryAddress) info->Event != EE_REDRAW) {
 		return (intptr_t) 0;
 	}
 	
@@ -148,11 +144,4 @@ DLL_EXPORT WINAPI intptr_t ProcessEditorEventW(const ProcessEditorEventInfo* inf
 	}
 	
 	return (intptr_t) 0;
-}
-
-DLL_EXPORT BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {
-	EXPLICITLY_UNUSED(hinstDLL);
-	EXPLICITLY_UNUSED(fdwReason);
-	EXPLICITLY_UNUSED(lpReserved);
-	return TRUE;
 }

@@ -5,6 +5,10 @@
 #error "TARGET" macro is not defined!
 #endif
 
+#include <assert.h>
+#include <stdbool.h>
+#include <windows.h>
+
 #if TARGET == X86
 typedef unsigned int MemoryAddress;
 #elif TARGET == X86-64
@@ -38,9 +42,6 @@ typedef struct OpenInfo OpenInfo;
 typedef struct EditorColor EditorColor;
 typedef struct ProcessEditorEventInfo ProcessEditorEventInfo;
 
-static const wchar_t* AUTHOR = L"Valeriy Zainullin";
-
-#include <windows.h>
 DLL_EXPORT BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {
 	EXPLICITLY_UNUSED(hinstDLL);
 	EXPLICITLY_UNUSED(fdwReason);
@@ -48,5 +49,56 @@ DLL_EXPORT BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpRes
 	return TRUE;
 }
 
+static const wchar_t* TITLE;
+static const wchar_t* DESCRIPTION;
+static const wchar_t* AUTHOR = L"Valeriy Zainullin";
+static const VersionInfo MIN_FAR_VERSION = {3, 0, 0, 0, VS_RELEASE};
+static const VersionInfo PLUGIN_VERSION;
+static bool pluginGUIDInitialized = false;
+static GUID pluginGUID;
+DLL_EXPORT WINAPI void GetGlobalInfoW(GlobalInfo* info) {
+	info->StructSize = sizeof(GlobalInfo);
+	info->MinFarVersion = MIN_FAR_VERSION;
+	info->Version = PLUGIN_VERSION;
+	
+	if (!pluginGUIDInitialized) {
+		HRESULT createGuidResult = CoCreateGuid(&pluginGUID);
+		assert(createGuidResult == S_OK);
+		EXPLICITLY_UNUSED(createGuidResult);
+		pluginGUIDInitialized = true;
+	}
+
+	info->Guid = pluginGUID;
+	info->Title = TITLE;
+	info->Description = DESCRIPTION;
+	info->Author = AUTHOR;
+}
+
+static PluginStartupInfo farAPI;
+DLL_EXPORT WINAPI void SetStartupInfoW(const PluginStartupInfo* info) {
+	farAPI = *info;
+}
+
+static void colorLine(const unsigned long long lineNumber);
+DLL_EXPORT WINAPI intptr_t ProcessEditorEventW(const ProcessEditorEventInfo* info) {
+	if ((MemoryAddress) info->Event != EE_REDRAW) {
+		return (intptr_t) 0;
+	}
+	
+	EditorInfo editorInfo;
+	intptr_t editorControlResult = farAPI.EditorControl(CURRENT_EDITOR, ECTL_GETINFO, (intptr_t) 0, &editorInfo);
+	assert((MemoryAddress) editorControlResult == 1);
+	EXPLICITLY_UNUSED(editorControlResult);
+	
+	for (
+		unsigned long long visibleLineNumber = 0;
+		visibleLineNumber < (MemoryAddress) editorInfo.WindowSizeY;
+		++visibleLineNumber
+	) {
+		colorLine(((MemoryAddress) editorInfo.TopScreenLine) + visibleLineNumber);
+	}
+	
+	return (intptr_t) 0;
+}
 
 #endif

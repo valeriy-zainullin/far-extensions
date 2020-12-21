@@ -32,7 +32,7 @@ static void colorLine(const RegisterValue lineNumber) {
 		(intptr_t) realPos,
 		(intptr_t) realPos,
 		(uintptr_t) PLUGIN_COLORING_PRIORITY,
-		ECF_AUTODELETE,
+		ECF_AUTODELETE | ECF_TABMARKFIRST, // TODO: проверить "ECF_TABMARKFIRST" без "TabColorer"!
 		PLUGIN_COLOR_USED,
 		pluginGUID
 	};

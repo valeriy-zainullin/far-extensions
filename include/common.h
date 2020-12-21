@@ -11,8 +11,10 @@
 
 #if TARGET == X86
 typedef unsigned int MemoryAddress;
+typedef unsigned int RegisterValue;
 #elif TARGET == X86-64
 typedef unsigned long long MemoryAddress;
+typedef unsigned long long RegisterValue;
 #else
 #error Target is not supported!
 #endif
@@ -34,6 +36,7 @@ typedef unsigned long long MemoryAddress;
 typedef struct FarColor FarColor;
 typedef struct VersionInfo VersionInfo;
 typedef struct EditorGetString EditorGetString;
+typedef struct EditorConvertPos EditorConvertPos;
 typedef struct EditorInfo EditorInfo;
 typedef struct PluginStartupInfo PluginStartupInfo;
 typedef struct GlobalInfo GlobalInfo;
@@ -79,7 +82,16 @@ DLL_EXPORT WINAPI void SetStartupInfoW(const PluginStartupInfo* info) {
 	farAPI = *info;
 }
 
-static void colorLine(const unsigned long long lineNumber);
+
+static RegisterValue minForRegisterValues(RegisterValue first, RegisterValue second) {
+	if (first <= second) {
+		return first;
+	} else {
+		return second;
+	}
+}
+
+static void colorLine(const RegisterValue lineNumber);
 DLL_EXPORT WINAPI intptr_t ProcessEditorEventW(const ProcessEditorEventInfo* info) {
 	if ((MemoryAddress) info->Event != EE_REDRAW) {
 		return (intptr_t) 0;
@@ -87,15 +99,19 @@ DLL_EXPORT WINAPI intptr_t ProcessEditorEventW(const ProcessEditorEventInfo* inf
 	
 	EditorInfo editorInfo;
 	intptr_t editorControlResult = farAPI.EditorControl(CURRENT_EDITOR, ECTL_GETINFO, (intptr_t) 0, &editorInfo);
-	assert((MemoryAddress) editorControlResult == 1);
-	EXPLICITLY_UNUSED(editorControlResult);
+	if ((MemoryAddress) editorControlResult != 1) {
+		return (intptr_t) 0;
+	}
+	// assert((MemoryAddress) editorControlResult == 1);
+	// EXPLICITLY_UNUSED(editorControlResult);
 	
-	for (
-		unsigned long long visibleLineNumber = 0;
-		visibleLineNumber < (MemoryAddress) editorInfo.WindowSizeY;
-		++visibleLineNumber
-	) {
-		colorLine(((MemoryAddress) editorInfo.TopScreenLine) + visibleLineNumber);
+	RegisterValue begin = editorInfo.TopScreenLine;
+	RegisterValue end = minForRegisterValues(
+		(RegisterValue) (editorInfo.TopScreenLine + editorInfo.WindowSizeY),
+		editorInfo.TotalLines
+	);
+	for (RegisterValue lineNumber = begin; lineNumber < end; ++lineNumber) {
+		colorLine(lineNumber);
 	}
 	
 	return (intptr_t) 0;

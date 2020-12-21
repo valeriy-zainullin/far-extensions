@@ -6,7 +6,8 @@
 #include <assert.h>
 
 static const wchar_t* TITLE = L"IndentChecker";
-static const wchar_t* DESCRIPTION = L"Checks indentation. Colors tabs if both spaces and tabs are used.";
+static const wchar_t* DESCRIPTION = L"Checks indentation. Colors tabs if both spaces and tabs are "
+	"used.";
 static const VersionInfo PLUGIN_VERSION = {1, 0, 0, 1, VS_RELEASE};
 
 static const unsigned int PLUGIN_COLORING_PRIORITY = 2;

@@ -1,0 +1,29 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-bionic
+    steps:
+    - uses: actions/checkout@v2
+    - name: install mingw
+      run: sudo apt-get -y install gcc-mingw-w64-i686 gcc-mingw-w64-x86_64  
+    - name: make
+      run: make
+  build-windows-cygwin:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.6'
+      - name: download cygwin
+        run: python -c "from urllib import requests; import ssl; open('setup-x86_64.exe', 'wb').write(request.urlopen('https://cygwin.com/setup-x86_64.exe', context=ssl.create_default_context()).read())"
+      - name: install cygwin
+        run: setup-x86_64.exe -P mingw64-i686-gcc-core mingw64-x86_64-gcc-core
+      - name: make
+        run: C:\\cygwin64\\bin\\bash.exe -c "PATH=^"$PATH:/bin^" make"

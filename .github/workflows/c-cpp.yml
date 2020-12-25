@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: '3.6'
       - name: download cygwin
-        run: python -c "from urllib import requests; import ssl; open('setup-x86_64.exe', 'wb').write(request.urlopen('https://cygwin.com/setup-x86_64.exe', context=ssl.create_default_context()).read())"
+        run: python -c "from urllib import request; import ssl; open('setup-x86_64.exe', 'wb').write(request.urlopen('https://cygwin.com/setup-x86_64.exe', context=ssl.create_default_context()).read())"
       - name: install cygwin
         run: setup-x86_64.exe -P mingw64-i686-gcc-core mingw64-x86_64-gcc-core
       - name: make

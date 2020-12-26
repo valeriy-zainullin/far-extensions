@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-bionic
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
     - name: Install mingw
@@ -21,8 +21,8 @@ jobs:
       - name: Download cygwin
         run: (New-Object System.Net.WebClient).DownloadFile("https://cygwin.com/setup-x86_64.exe", "setup-x86_64.exe")
       - name: Install cygwin
-        run: Start-Process -FilePath "setup-x86_64.exe" -ArgumentList "-P mingw64-i686-gcc-core mingw64-x86_64-gcc-core"
+        run: $process = Start-Process -Wait -FilePath "setup-x86_64.exe" -ArgumentList "-P mingw64-i686-gcc-core mingw64-x86_64-gcc-core"; if ($process.ExitCode -ne 0) { throw "Failed to install cygwin." }
       - name: Add cygwin into the PATH
         run: $env:Path += ";C:\cygwin64\bin"
       - name: Build
-        run: Start-Process -FilePath "make"
+        run: $process = Start-Process -Wait -FilePath "make"; if ($process.ExitCode -ne 0) { throw "Failed to run make." }

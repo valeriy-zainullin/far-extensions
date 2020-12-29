@@ -18,6 +18,7 @@ jobs:
   build-windows-cygwin:
     runs-on: windows-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Download cygwin
         run: (New-Object System.Net.WebClient).DownloadFile("https://cygwin.com/setup-x86_64.exe", "setup-x86_64.exe")
       - name: Install cygwin

@@ -23,11 +23,8 @@ jobs:
       - name: Install cygwin
         run:
           $cygwin_root = Join-Path (Get-Item .).FullName cygwin64;
-          $process = Start-Process -Wait -PassThru -FilePath "setup-x86_64.exe" -ArgumentList ("-B -n -d -R {0} -s https://mirrors.kernel.org/sourceware/cygwin/ -q -P make mingw64-i686-gcc-core mingw64-x86_64-gcc-core" -f $cygwin_root);
-          if ($process.ExitCode -ne 0) { throw "Failed to install cygwin." }
+          .\setup-x86_64.exe -B -n -d -R $cygwin_root -s https://mirrors.kernel.org/sourceware/cygwin/ -q -P make mingw64-i686-gcc-core mingw64-x86_64-gcc-core;
       - name: Add cygwin into the PATH
         run: $env:Path += ";{0}/bin" -f $cygwin_root
       - name: Build
-        run:
-          $process = Start-Process -Wait -PassThru -FilePath "make";
-          if ($process.ExitCode -ne 0) { throw "Failed to run make." }
+        run: make

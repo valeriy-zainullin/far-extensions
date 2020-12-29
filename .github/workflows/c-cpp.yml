@@ -21,8 +21,13 @@ jobs:
       - name: Download cygwin
         run: (New-Object System.Net.WebClient).DownloadFile("https://cygwin.com/setup-x86_64.exe", "setup-x86_64.exe")
       - name: Install cygwin
-        run: $process = Start-Process -Wait -PassThru -FilePath "setup-x86_64.exe" -ArgumentList "-q -P mingw64-i686-gcc-core mingw64-x86_64-gcc-core"; if ($process.ExitCode -ne 0) { throw "Failed to install cygwin." }
+        run: \
+          $cygwin_root = Join-Path (Get-Item .).FullName cygwin64;
+          $process = Start-Process -Wait -PassThru -FilePath "setup-x86_64.exe" -ArgumentList ("-B -R {0} -q -P make mingw64-i686-gcc-core mingw64-x86_64-gcc-core" -f $cygwin_root); \
+          if ($process.ExitCode -ne 0) { throw "Failed to install cygwin." }
       - name: Add cygwin into the PATH
-        run: $env:Path += ";C:\cygwin64\bin"
+        run: $env:Path += ";{0}/bin" -f $cygwin_root
       - name: Build
-        run: $process = Start-Process -Wait -PassThru -FilePath "make"; if ($process.ExitCode -ne 0) { throw "Failed to run make." }
+        run: \
+          $process = Start-Process -Wait -PassThru -FilePath "make"; \
+          if ($process.ExitCode -ne 0) { throw "Failed to run make." }

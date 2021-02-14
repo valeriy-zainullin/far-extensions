@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-windows-cygwin:
+  build-windows-mingw-gcc:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2

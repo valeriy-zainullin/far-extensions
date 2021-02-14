@@ -12,5 +12,6 @@ if not exist "build_%1" (
 pushd "build_%1"
 rmdir /Q /S rebuild
 popd
-move "build_%1" "far-extensions-%1"
-exit /b 
+mkdir "far-extensions-%1"
+move "build_%1" "far-extensions-%1\far-extensions-%1"
+exit /b

@@ -26,6 +26,6 @@ jobs:
           $cygwin_root = Join-Path (Get-Item .).FullName cygwin64;
           .\setup-x86_64.exe -B -n -d -R $cygwin_root -s https://mirrors.kernel.org/sourceware/cygwin/ -q -P make mingw64-i686-gcc-core mingw64-x86_64-gcc-core;
       - name: Add cygwin into the PATH
-        run: $env:Path += ";{0}/bin" -f $cygwin_root
+        run: $env:Path += ";{0}\bin" -f $cygwin_root
       - name: Build
         run: make

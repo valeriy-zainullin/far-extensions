@@ -1,5 +1,4 @@
-﻿CFLAGS = -Wall -pedantic -Wextra -Wshadow -Wno-missing-field-initializers -Werror -std=c11 \
-	-Iinclude
+﻿CFLAGS = -Wall -pedantic -Wextra -Wshadow -Werror -std=c11 -Iinclude
 LDFLAGS = -static -shared -lole32
 RELEASE_CFLAGS = -O2 -DNDEBUG
 RELEASE_LDFLAGS = -s

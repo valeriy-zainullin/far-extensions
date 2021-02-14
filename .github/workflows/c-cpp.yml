@@ -7,14 +7,6 @@ on:
     branches: [ main ]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install mingw
-      run: sudo apt-get -y install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64  
-    - name: Build
-      run: make
   build-windows-cygwin:
     runs-on: windows-latest
     steps:
@@ -32,3 +24,21 @@ jobs:
           $cygwin_root = Join-Path (Get-Item .).FullName cygwin64;
           $env:Path += ";{0}\bin" -f $cygwin_root;
           make;
+      - name: Package
+        run: cmd /c package.bat
+      - uses: actions/upload-artifact@v2
+        with:
+          name: far-extensions-x86
+          path: far-extensions-x86
+      - uses: actions/upload-artifact@v2
+        with:
+          name: far-extensions-x86-64
+          path: far-extensions-x86-64
+      - uses: actions/upload-artifact@v2
+        with:
+          name: far-extensions-x86_debug
+          path: far-extensions-x86_debug
+      - uses: actions/upload-artifact@v2
+        with:
+          name: far-extensions-x86-64_debug
+          path: far-extensions-x86-64_debug

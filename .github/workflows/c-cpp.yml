@@ -30,4 +30,4 @@ jobs:
       - name: Add cygwin into the PATH
         run: $env:Path += ";{0}\bin" -f $cygwin_root
       - name: Build
-        run: make
+        run: Write-Output $env:Path; make

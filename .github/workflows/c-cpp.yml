@@ -26,7 +26,7 @@ jobs:
           $cygwin_root = Join-Path (Get-Item .).FullName cygwin64;
           $cygwin_local_package_dir = Join-Path (Get-Item .).FullName cygwin64_local_package_dir;
           $cygwin_setup_arguments = "-B -q -n -N -d -R {0} -s https://mirrors.kernel.org/sourceware/cygwin/ -l {1} -P make -P mingw64-i686-gcc-core -P mingw64-x86_64-gcc-core" -f $cygwin_root, $cygwin_local_package_dir;
-          Start-Process -Wait -FilePath ".\setup-x86_64.exe" -ArgumentList $cygwin_setup_arguments;
+          Start-Process -Wait -NoNewWindow -FilePath ".\setup-x86_64.exe" -ArgumentList $cygwin_setup_arguments;
       - name: Add cygwin into the PATH
         run: $env:Path += ";{0}\bin" -f $cygwin_root
       - name: Build

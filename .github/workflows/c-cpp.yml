@@ -29,16 +29,20 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: far-extensions-x86
-          path: far-extensions-x86
+          path: |
+            far-extensions-x86
       - uses: actions/upload-artifact@v2
         with:
           name: far-extensions-x86-64
-          path: far-extensions-x86-64
+          path: |
+            far-extensions-x86-64
       - uses: actions/upload-artifact@v2
         with:
           name: far-extensions-x86_debug
-          path: far-extensions-x86_debug
+          path: |
+            far-extensions-x86_debug
       - uses: actions/upload-artifact@v2
         with:
           name: far-extensions-x86-64_debug
-          path: far-extensions-x86-64_debug
+          path: |
+            far-extensions-x86-64_debug

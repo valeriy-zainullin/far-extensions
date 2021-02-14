@@ -1,0 +1,44 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-windows-cygwin:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download cygwin
+        run: (New-Object System.Net.WebClient).DownloadFile("https://cygwin.com/setup-x86_64.exe", "setup-x86_64.exe")
+      - name: Install cygwin
+        run:
+          $cygwin_root = Join-Path (Get-Item .).FullName cygwin64;
+          $cygwin_local_package_dir = Join-Path (Get-Item .).FullName cygwin64_local_package_dir;
+          $cygwin_setup_arguments = "-B -q -n -N -d -R {0} -s https://mirrors.kernel.org/sourceware/cygwin/ -l {1} -P make -P mingw64-i686-gcc-core -P mingw64-x86_64-gcc-core" -f $cygwin_root, $cygwin_local_package_dir;
+          Start-Process -Wait -NoNewWindow -FilePath ".\setup-x86_64.exe" -ArgumentList $cygwin_setup_arguments;
+      - name: Build
+        run:
+          $cygwin_root = Join-Path (Get-Item .).FullName cygwin64;
+          $env:Path += ";{0}\bin" -f $cygwin_root;
+          make;
+      - name: Package
+        run: cmd /c package.bat
+      - uses: actions/upload-artifact@v2
+        with:
+          name: far-extensions-x86
+          path: far-extensions-x86
+      - uses: actions/upload-artifact@v2
+        with:
+          name: far-extensions-x86-64
+          path: far-extensions-x86-64
+      - uses: actions/upload-artifact@v2
+        with:
+          name: far-extensions-x86_debug
+          path: far-extensions-x86_debug
+      - uses: actions/upload-artifact@v2
+        with:
+          name: far-extensions-x86-64_debug
+          path: far-extensions-x86-64_debug

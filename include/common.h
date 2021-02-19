@@ -91,6 +91,7 @@ static RegisterValue minForRegisterValues(RegisterValue first, RegisterValue sec
 	}
 }
 
+static void newColoring();
 static void colorLine(const RegisterValue lineNumber);
 DLL_EXPORT WINAPI intptr_t ProcessEditorEventW(const ProcessEditorEventInfo* info) {
 	if ((MemoryAddress) info->Event != EE_REDRAW) {
@@ -110,11 +111,57 @@ DLL_EXPORT WINAPI intptr_t ProcessEditorEventW(const ProcessEditorEventInfo* inf
 		(RegisterValue) (editorInfo.TopScreenLine + editorInfo.WindowSizeY),
 		editorInfo.TotalLines
 	);
+	newColoring();
 	for (RegisterValue lineNumber = begin; lineNumber < end; ++lineNumber) {
 		colorLine(lineNumber);
 	}
 	
 	return (intptr_t) 0;
+}
+
+static void getLine(RegisterValue lineNumber, const wchar_t** line, RegisterValue* lineLength) {
+	EditorGetString editorString;
+	editorString.StructSize = sizeof(EditorGetString);
+	editorString.StringNumber = lineNumber;
+	intptr_t editorControlResult = farAPI.EditorControl(
+		CURRENT_EDITOR,
+		ECTL_GETSTRING,
+		(intptr_t) 0,
+		&editorString
+	);
+	assert((MemoryAddress) editorControlResult == 1);
+	EXPLICITLY_UNUSED(editorControlResult);
+	
+	*line = editorString.StringText;
+	*lineLength = editorString.StringLength;
+}
+
+static const unsigned int PLUGIN_COLORING_PRIORITY;
+static void colorCharacter(
+	RegisterValue lineNumber,
+	RegisterValue position,
+	FarColor color,
+	EDITORCOLORFLAGS flags
+) {
+	EditorColor editorColor;
+	editorColor.StructSize = sizeof(EditorColor);
+	editorColor.StringNumber = (intptr_t) lineNumber;
+	editorColor.ColorItem = (intptr_t) 0;
+	editorColor.StartPos = (intptr_t) position;
+	editorColor.EndPos = (intptr_t) position;
+	editorColor.Priority = (uintptr_t) PLUGIN_COLORING_PRIORITY;
+	editorColor.Flags = ECF_AUTODELETE | flags;
+	editorColor.Color = color;
+	editorColor.Owner = pluginGUID;
+	// editorControlResult =
+	farAPI.EditorControl(
+		CURRENT_EDITOR,
+		ECTL_ADDCOLOR,
+		(intptr_t) 0,
+		&editorColor
+	);
+	// assert((MemoryAddress) editorControlResult == 1);
+	// EXPLICITLY_UNUSED(editorControlResult);
 }
 
 #endif

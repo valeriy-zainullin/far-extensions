@@ -59,6 +59,10 @@ static void colorLine(const RegisterValue lineNumber) {
 	}
 	
 	RegisterValue beginPos = 0;
+	if (!isSpaceCharacter(line[beginPos])) {
+		return;
+	}
+
 	RegisterValue endPos = beginPos;
 	for (; endPos + 1 < lineLength && isSpaceCharacter(line[endPos + 1]); ++endPos);
 	
